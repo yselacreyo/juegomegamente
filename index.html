@@ -147,9 +147,20 @@
             border: none; margin-bottom: 20px; text-align: center; font-size: 1rem;
             box-sizing: border-box;
         }
-        #join-screen button {
+        #join-screen button, #join-screen #room-buttons button {
             padding: 12px 40px; border-radius: 25px; border: none;
             background: #2ecc71; color: white; font-size: 1.2rem; cursor: pointer;
+        }
+        #join-screen #room-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        #join-screen #room-buttons button:last-child { background: #3498db; }
+        #join-screen #join-room-area { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+        #join-screen #join-room-area input { width: 120px; text-align: center; text-transform: uppercase; font-size: 1.2rem; letter-spacing: 4px; }
+        #join-screen #join-room-area button { padding: 10px 20px; font-size: 1rem; }
+        #join-screen #join-room-area button:last-child { background: #666; }
+        #room-code-display {
+            font-size: 3rem; font-weight: bold; letter-spacing: 8px;
+            background: rgba(255,255,255,0.1); padding: 10px 30px;
+            border-radius: 10px; margin: 10px 0; font-family: monospace;
         }
 
         /* RESPONSIVE - TABLET */
@@ -234,8 +245,22 @@
 
     <div id="join-screen">
         <h1>Echa chismecito mientras juegas trica traca<br>con tu amigo en la frente de Megamente</h1>
-        <input type="text" id="username-input" placeholder="Tu nombre..." style="padding: 10px; font-size: 1.2rem;">
-        <button onclick="joinGame()" style="margin-top: 20px; padding: 10px 30px; font-size: 1.2rem; cursor: pointer;">Entrar a la Sala</button>
+        <input type="text" id="username-input" placeholder="Tu nombre...">
+        <div id="room-buttons">
+            <button onclick="crearSala()">🎮 Crear Sala</button>
+            <button onclick="mostrarUnirse()">🔗 Unirse a Sala</button>
+        </div>
+        <div id="join-room-area" style="display:none;">
+            <input type="text" id="room-code-input" placeholder="Código de sala (ej: AB12)" maxlength="4" style="text-transform:uppercase;">
+            <button onclick="unirseSala()">Entrar</button>
+            <button onclick="cancelarUnirse()" style="background:#666;">Cancelar</button>
+        </div>
+        <div id="room-info" style="display:none;">
+            <p style="margin-bottom:5px;">Compartí este código con tu amigo:</p>
+            <div id="room-code-display"></div>
+            <button onclick="copiarEnlace()">📋 Copiar enlace</button>
+            <p id="waiting-text" style="font-size:0.8rem;margin-top:10px;color:#f1c40f;">Esperando que alguien se una...</p>
+        </div>
     </div>
 
     <div id="game-ui">
@@ -281,15 +306,50 @@
 
         const avatars = ['👤', '🤖', '👽', '🦸', '🕵️', '🦁'];
 
-        function joinGame() {
+        function getNombre() {
             const name = document.getElementById('username-input').value.trim();
-            if (!name) return alert("Pon tu nombre");
+            if (!name) { alert("Pon tu nombre"); return null; }
+            return name;
+        }
+
+        function crearSala() {
+            const name = getNombre();
+            if (!name) return;
             myName = name;
             const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
             myAvatar = randomAvatar;
-            socket.emit('join-game', { name, avatar: randomAvatar });
-            document.getElementById('join-screen').style.display = 'none';
-            document.getElementById('game-ui').style.display = 'block';
+            socket.emit('create-room', { name, avatar: randomAvatar });
+            document.getElementById('room-buttons').style.display = 'none';
+            document.getElementById('username-input').disabled = true;
+        }
+
+        function mostrarUnirse() {
+            document.getElementById('room-buttons').style.display = 'none';
+            document.getElementById('join-room-area').style.display = 'flex';
+        }
+
+        function cancelarUnirse() {
+            document.getElementById('join-room-area').style.display = 'none';
+            document.getElementById('room-buttons').style.display = 'flex';
+        }
+
+        function unirseSala() {
+            const name = getNombre();
+            if (!name) return;
+            const roomId = document.getElementById('room-code-input').value.trim().toUpperCase();
+            if (!roomId || roomId.length < 2) { alert("Pon un código de sala válido"); return; }
+            myName = name;
+            const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+            myAvatar = randomAvatar;
+            socket.emit('join-room', { name, avatar: randomAvatar, roomId });
+        }
+
+        function copiarEnlace() {
+            const roomId = document.getElementById('room-code-display').innerText;
+            const url = window.location.origin + '?room=' + roomId;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Enlace copiado: ' + url);
+            });
         }
 
         function makeMove(index) {
@@ -309,10 +369,39 @@
             socket.emit('reset-game');
         }
 
+        // Auto-unirse si hay ?room= en la URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const roomParam = params.get('room');
+            if (roomParam) {
+                document.getElementById('room-code-input').value = roomParam.toUpperCase();
+                setTimeout(() => unirseSala(), 500);
+            }
+        });
+
+        socket.on('room-created', (data) => {
+            document.getElementById('join-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
+            document.getElementById('room-info').style.display = 'block';
+            document.getElementById('room-code-display').innerText = data.roomId;
+        });
+
+        socket.on('room-error', (data) => {
+            alert(data.message);
+        });
+
+        socket.on('game-start', () => {
+            document.getElementById('room-info').style.display = 'none';
+            document.getElementById('turn-text').innerText = '¡Juego Iniciado! Turno de X';
+            document.getElementById('winner-overlay').style.display = 'none';
+        });
+
         socket.on('assign-symbol', (data) => {
             mySymbol = data.symbol;
             myColor = data.color;
             myAvatar = data.avatar;
+            document.getElementById('join-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
         });
 
         socket.on('update-players', (players) => {
@@ -336,11 +425,6 @@
             const p2 = players.find(p => p.symbol === 'O');
             if (p1) updateInfo('p1-info', p1);
             if (p2) updateInfo('p2-info', p2);
-        });
-
-        socket.on('game-start', () => {
-            document.getElementById('turn-text').innerText = '¡Juego Iniciado! Turno de X';
-            document.getElementById('winner-overlay').style.display = 'none';
         });
 
         socket.on('update-turn', (data) => {
@@ -382,8 +466,11 @@
         });
 
         socket.on('player-disconnected', (data) => {
-            const turnText = document.getElementById('turn-text');
-            turnText.innerText = data.message;
+            document.getElementById('turn-text').innerText = data.message;
+            const roomCode = document.getElementById('room-code-display').innerText;
+            if (roomCode) {
+                document.getElementById('room-info').style.display = 'block';
+            }
         });
     </script>
 </body>

@@ -47,23 +47,39 @@ io.on('connection', (socket) => {
   let currentRoom = null;
   let currentPlayer = null;
 
-  socket.on('join-game', ({ name, avatar }) => {
-    let roomId = null;
+  socket.on('create-room', ({ name, avatar }) => {
+    let roomId;
+    do {
+      roomId = Math.random().toString(36).slice(2, 6).toUpperCase();
+    } while (games[roomId]);
 
-    // Find an available room or create one
-    for (const rid in games) {
-      if (games[rid].players.length < 2) {
-        roomId = rid;
-        break;
-      }
-    }
-    if (!roomId) {
-      roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+    const room = getRoom(roomId);
+    const symbol = 'X';
+    const color = playerColors[0];
+    const assignedAvatar = avatar || avatars[Math.floor(Math.random() * avatars.length)];
+
+    currentRoom = roomId;
+    currentPlayer = { id: socket.id, name, avatar: assignedAvatar, color, symbol, score: 0 };
+
+    room.players.push(currentPlayer);
+    socket.join(roomId);
+
+    socket.emit('assign-symbol', { symbol, color, name, avatar: assignedAvatar });
+    socket.emit('room-created', { roomId });
+    io.to(roomId).emit('update-players', room.players);
+    io.to(roomId).emit('update-scores', room.players);
+  });
+
+  socket.on('join-room', ({ name, avatar, roomId }) => {
+    roomId = roomId.toUpperCase();
+    if (!games[roomId] || games[roomId].players.length >= 2) {
+      socket.emit('room-error', { message: 'Sala no existe o está llena' });
+      return;
     }
 
     const room = getRoom(roomId);
-    const symbol = room.players.length === 0 ? 'X' : 'O';
-    const color = playerColors[room.players.length % playerColors.length];
+    const symbol = 'O';
+    const color = playerColors[1];
     const assignedAvatar = avatar || avatars[Math.floor(Math.random() * avatars.length)];
 
     currentRoom = roomId;
@@ -74,10 +90,7 @@ io.on('connection', (socket) => {
 
     socket.emit('assign-symbol', { symbol, color, name, avatar: assignedAvatar });
 
-    if (room.players.length === 2) {
-      io.to(roomId).emit('game-start', { message: '¡Juego Iniciado!', turn: room.turn });
-    }
-
+    io.to(roomId).emit('game-start', { message: '¡Juego Iniciado!', turn: room.turn });
     io.to(roomId).emit('update-players', room.players);
     io.to(roomId).emit('update-scores', room.players);
   });
