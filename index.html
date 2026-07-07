@@ -133,10 +133,19 @@
             background: rgba(0,0,0,0.9);
             display: flex; flex-direction: column; align-items: center; 
             justify-content: center; z-index: 1000; color: white;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #join-screen h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.4;
         }
         #join-screen input {
-            padding: 12px; width: 250px; border-radius: 25px; 
-            border: none; margin-bottom: 20px; text-align: center;
+            padding: 12px; width: 280px; max-width: 90vw; border-radius: 25px; 
+            border: none; margin-bottom: 20px; text-align: center; font-size: 1rem;
+            box-sizing: border-box;
         }
         #join-screen button {
             padding: 12px 40px; border-radius: 25px; border: none;
@@ -154,6 +163,10 @@
 
         /* RESPONSIVE - CELULAR */
         @media (max-width: 480px) {
+            #join-screen h1 { font-size: 1.1rem; padding: 0 10px; }
+            #join-screen input { font-size: 0.9rem; padding: 10px; }
+            #join-screen button { font-size: 1rem; padding: 10px 30px; }
+
             #game-board {
                 grid-template-columns: repeat(3, 44px);
                 grid-template-rows: repeat(3, 44px);
@@ -220,7 +233,7 @@
     <div id="bg-container"></div>
 
     <div id="join-screen">
-        <h1>MEGAMIND TIC-TAC-TOE</h1>
+        <h1>Echa chismecito mientras juegas trica traca<br>con tu amigo en la frente de Megamente</h1>
         <input type="text" id="username-input" placeholder="Tu nombre..." style="padding: 10px; font-size: 1.2rem;">
         <button onclick="joinGame()" style="margin-top: 20px; padding: 10px 30px; font-size: 1.2rem; cursor: pointer;">Entrar a la Sala</button>
     </div>
