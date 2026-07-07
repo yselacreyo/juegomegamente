@@ -253,7 +253,10 @@
         @media (max-width: 768px) {
             #game-board { grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); top: 15%; }
             .cell { width: 60px; height: 60px; font-size: 2rem; }
-            #chat-container { width: 200px; height: 220px; }
+            #chat-container { width: 220px; height: 250px; }
+            #chat-header { font-size: 0.75rem; padding: 6px 12px; }
+            #chat-messages { font-size: 0.78rem; }
+            .chat-msg { font-size: 0.75rem; }
             #stats-bar { font-size: 1.2rem; gap: 20px; top: 12px; }
             #turn-text { top: 80px; font-size: 1.3rem; }
             #room-code-below-board { top: calc(15% + 260px); }
@@ -309,17 +312,20 @@
 
             #chat-container {
                 top: auto;
-                bottom: 12px;
+                bottom: 60px;
                 right: 8px;
                 left: auto;
-                width: 120px;
-                height: 100px;
-                border-radius: 8px;
+                width: 180px;
+                height: 150px;
+                border-radius: 10px;
             }
-            #chat-messages { padding: 3px 5px; font-size: 0.6rem; max-height: 60px; }
-            #chat-input-area { padding: 2px; }
-            #chat-input { padding: 2px 5px; font-size: 0.55rem; border-radius: 8px; }
-            #chat-btn { padding: 2px 5px; margin-left: 2px; font-size: 0.55rem; }
+            #chat-header { padding: 5px 10px; font-size: 0.7rem; }
+            #chat-header::before { content: "💬"; }
+            #chat-messages { padding: 6px 8px; font-size: 0.7rem; }
+            .chat-msg { font-size: 0.68rem; margin-bottom: 4px; }
+            #chat-input-area { padding: 5px; }
+            #chat-input { padding: 4px 8px; font-size: 0.65rem; border-radius: 12px; }
+            #chat-btn { padding: 4px 10px; font-size: 0.65rem; border-radius: 12px; }
         }
 
         @media (max-width: 360px) {
@@ -336,8 +342,12 @@
             .cell { width: 36px; height: 36px; font-size: 1rem; }
             #stats-bar { font-size: 0.55rem; }
             #turn-text { top: 28%; font-size: 0.7rem; }
-            #chat-container { width: 100px; height: 85px; }
-            #chat-messages { font-size: 0.5rem; }
+            #chat-container { bottom: 55px; width: 150px; height: 120px; }
+            #chat-header { padding: 4px 8px; font-size: 0.6rem; }
+            #chat-messages { padding: 4px 6px; font-size: 0.6rem; }
+            .chat-msg { font-size: 0.6rem; }
+            #chat-input { padding: 3px 6px; font-size: 0.55rem; }
+            #chat-btn { padding: 3px 7px; font-size: 0.55rem; }
             #room-code-below-board { top: calc(12% + 180px); }
             #room-code-below-board .code-value { font-size: 1rem; letter-spacing: 3px; padding: 2px 10px; }
             #room-code-below-board .code-label { font-size: 0.6rem; }
